@@ -4,11 +4,13 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>AI Resume Analyser — ATS Score Checker</title>
-  <meta name="description" content="Upload your resume and job description to get an AI-powered ATS score, skills gap analysis, and actionable improvement tips. Powered by Google Gemini." />
+  <meta name="description" content="Upload your resume and paste the job description to get an AI-powered ATS score, skills gap analysis, and actionable improvement tips. Powered by Google Gemini." />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="style.css" />
+  <!-- PDF.js — parse PDF entirely in the browser, no server needed -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
 </head>
 <body>
 
@@ -17,6 +19,38 @@
 <div class="orb orb-1"></div>
 <div class="orb orb-2"></div>
 <div class="orb orb-3"></div>
+
+<!-- ══════════════════════════════════════════════════════════════════
+     API KEY MODAL — shown once until user saves their key
+     ══════════════════════════════════════════════════════════════════ -->
+<div class="modal-overlay" id="apiModal">
+  <div class="modal-box glass-card">
+    <div class="modal-icon">🔑</div>
+    <h2 class="modal-title">Enter Your Gemini API Key</h2>
+    <p class="modal-desc">
+      Your key is saved <strong>only in your browser</strong> (localStorage) and never
+      sent to any server except Google's API directly.
+    </p>
+    <div class="api-input-wrap">
+      <input
+        type="password"
+        id="apiKeyInput"
+        class="api-key-input"
+        placeholder="AIzaSy…"
+        autocomplete="off"
+        spellcheck="false"
+      />
+      <button class="eye-btn" id="toggleEye" title="Show/hide key">👁</button>
+    </div>
+    <button class="btn btn-primary btn-full" id="saveApiKey">Save & Continue →</button>
+    <p class="modal-link">
+      Get a <strong>free</strong> key at
+      <a href="https://aistudio.google.com/app/apikey" target="_blank" rel="noopener">
+        aistudio.google.com →
+      </a>
+    </p>
+  </div>
+</div>
 
 <!-- ── Navigation ───────────────────────────────────────────────────── -->
 <nav class="navbar" id="navbar">
@@ -28,6 +62,7 @@
     <div class="nav-links">
       <a href="#analyser" class="nav-link">Analyser</a>
       <a href="#how-it-works" class="nav-link">How It Works</a>
+      <button class="key-btn" id="changeKeyBtn" title="Enter / Change API Key">🔑 API Key</button>
       <span id="ai-badge" class="ai-badge hidden">
         <span class="pulse-dot"></span> AI Online
       </span>
@@ -39,7 +74,7 @@
 <header class="hero" id="hero">
   <div class="hero-content">
     <div class="hero-tag">
-      <span>🤖</span> Powered by Google Gemini AI
+      <span>🤖</span> Powered by Google Gemini AI · Runs 100% in your browser
     </div>
     <h1 class="hero-title">
       Beat the ATS.<br />
@@ -53,7 +88,7 @@
     <div class="hero-stats">
       <div class="stat-pill"><span class="stat-num">100%</span> ATS Score</div>
       <div class="stat-pill"><span class="stat-num">AI</span> Powered</div>
-      <div class="stat-pill"><span class="stat-num">Instant</span> Analysis</div>
+      <div class="stat-pill"><span class="stat-num">No</span> Server Needed</div>
     </div>
     <a href="#analyser" class="btn btn-primary hero-cta">
       Analyse My Resume <span>→</span>
@@ -117,7 +152,7 @@
           <span id="btnText">Analyse My Resume</span>
           <span id="btnSpinner" class="spinner hidden"></span>
         </button>
-        <p class="disclaimer">🔒 Your data is processed locally and never stored.</p>
+        <p class="disclaimer">🔒 Everything runs in your browser — your resume never leaves your device.</p>
       </div>
 
       <!-- ── Right: Results ── -->
@@ -136,7 +171,7 @@
           </ul>
         </div>
 
-        <!-- Results Container (hidden until analysis) -->
+        <!-- Results Container -->
         <div class="results-container hidden" id="resultsContainer">
 
           <!-- Score Hero Card -->
@@ -156,12 +191,9 @@
                     <stop offset="100%" style="stop-color:#06b6d4"/>
                   </linearGradient>
                 </defs>
-                <!-- Background arc -->
                 <path d="M 20 100 A 80 80 0 0 1 180 100" fill="none" stroke="#1e1b4b" stroke-width="14" stroke-linecap="round"/>
-                <!-- Foreground arc -->
                 <path id="gaugeArc" d="M 20 100 A 80 80 0 0 1 180 100" fill="none" stroke="url(#gaugeGrad)" stroke-width="14" stroke-linecap="round"
                   stroke-dasharray="251.2" stroke-dashoffset="251.2" style="transition: stroke-dashoffset 1.5s cubic-bezier(.4,0,.2,1)"/>
-                <!-- Score text -->
                 <text x="100" y="90" text-anchor="middle" class="gauge-score" id="gaugeScore">0%</text>
                 <text x="100" y="110" text-anchor="middle" class="gauge-label">ATS Score</text>
               </svg>
@@ -177,9 +209,7 @@
           <!-- Score Breakdown -->
           <div class="glass-card">
             <h3 class="card-title">Score Breakdown</h3>
-            <div class="breakdown-list" id="breakdownList">
-              <!-- Populated by JS -->
-            </div>
+            <div class="breakdown-list" id="breakdownList"></div>
           </div>
 
           <!-- Skills Grid -->
@@ -194,7 +224,7 @@
             </div>
           </div>
 
-          <!-- Keywords Found / Missing -->
+          <!-- Keywords -->
           <div class="skills-grid">
             <div class="glass-card">
               <h3 class="card-title">🔑 Keywords Found</h3>
@@ -224,7 +254,7 @@
             <div class="action-list" id="actionList">—</div>
           </div>
 
-          <!-- Experience Comparison -->
+          <!-- Experience -->
           <div class="glass-card exp-card">
             <h3 class="card-title">📊 Experience Analysis</h3>
             <div class="exp-grid">
@@ -247,7 +277,6 @@
             </div>
           </div>
 
-          <!-- Download Report Button -->
           <button class="btn btn-primary btn-full" id="downloadBtn">
             📥 Download Full Report
           </button>
@@ -262,36 +291,34 @@
 <section id="how-it-works" class="how-section">
   <div class="container">
     <h2 class="section-title">How It Works</h2>
-    <p class="section-subtitle">Three simple steps to job-ready perfection</p>
+    <p class="section-subtitle">Three simple steps. No account. No server. Free.</p>
     <div class="steps-grid">
       <div class="step-card glass-card">
         <div class="step-num">01</div>
-        <div class="step-icon">📄</div>
-        <h3>Upload Resume</h3>
-        <p>Drop your PDF resume. Our parser extracts every word, skill, and achievement.</p>
+        <div class="step-icon">🔑</div>
+        <h3>Add API Key</h3>
+        <p>Enter your free Google Gemini API key once. It's saved locally in your browser — never sent elsewhere.</p>
       </div>
       <div class="step-card glass-card">
         <div class="step-num">02</div>
-        <div class="step-icon">💼</div>
-        <h3>Paste Job Description</h3>
-        <p>Add the exact job posting. The more detail, the more accurate your score.</p>
+        <div class="step-icon">📄</div>
+        <h3>Upload Resume + JD</h3>
+        <p>Drop your PDF resume and paste the job description. PDF text is extracted entirely in your browser.</p>
       </div>
       <div class="step-card glass-card">
         <div class="step-num">03</div>
         <div class="step-icon">🤖</div>
         <h3>Get AI Analysis</h3>
-        <p>Google Gemini AI analyses both documents and returns your personalised ATS score with action items.</p>
+        <p>Gemini 2.0 Flash analyses both documents and returns your personalised ATS score + action items instantly.</p>
       </div>
     </div>
   </div>
 </section>
 
-<!-- ── Footer ────────────────────────────────────────────────────────── -->
 <footer class="footer">
-<p>Made with ❤️ by <strong>LALIT SHARMA</strong> · ResumeAI © 2026</p>
+  <p>Built with ❤️ using <strong>Google Gemini AI</strong> · Runs 100% in your browser · ResumeAI © 2026</p>
 </footer>
 
-<!-- ── Toast Notification ─────────────────────────────────────────── -->
 <div class="toast" id="toast"></div>
 
 <script src="app.js"></script>
