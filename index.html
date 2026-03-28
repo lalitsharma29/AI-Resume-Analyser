@@ -1,0 +1,299 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>AI Resume Analyser — ATS Score Checker</title>
+  <meta name="description" content="Upload your resume and job description to get an AI-powered ATS score, skills gap analysis, and actionable improvement tips. Powered by Google Gemini." />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+<!-- ── Animated Background ─────────────────────────────────────────── -->
+<div class="bg-grid"></div>
+<div class="orb orb-1"></div>
+<div class="orb orb-2"></div>
+<div class="orb orb-3"></div>
+
+<!-- ── Navigation ───────────────────────────────────────────────────── -->
+<nav class="navbar" id="navbar">
+  <div class="nav-inner">
+    <a href="#" class="nav-logo">
+      <span class="logo-icon">⚡</span>
+      <span>ResumeAI</span>
+    </a>
+    <div class="nav-links">
+      <a href="#analyser" class="nav-link">Analyser</a>
+      <a href="#how-it-works" class="nav-link">How It Works</a>
+      <span id="ai-badge" class="ai-badge hidden">
+        <span class="pulse-dot"></span> AI Online
+      </span>
+    </div>
+  </div>
+</nav>
+
+<!-- ── Hero ─────────────────────────────────────────────────────────── -->
+<header class="hero" id="hero">
+  <div class="hero-content">
+    <div class="hero-tag">
+      <span>🤖</span> Powered by Google Gemini AI
+    </div>
+    <h1 class="hero-title">
+      Beat the ATS.<br />
+      <span class="gradient-text">Land the Interview.</span>
+    </h1>
+    <p class="hero-subtitle">
+      Upload your resume and paste the job description. Our AI analyses your
+      match score, identifies skill gaps, and gives you a precise ATS score
+      out of 100 — so you know exactly where you stand.
+    </p>
+    <div class="hero-stats">
+      <div class="stat-pill"><span class="stat-num">100%</span> ATS Score</div>
+      <div class="stat-pill"><span class="stat-num">AI</span> Powered</div>
+      <div class="stat-pill"><span class="stat-num">Instant</span> Analysis</div>
+    </div>
+    <a href="#analyser" class="btn btn-primary hero-cta">
+      Analyse My Resume <span>→</span>
+    </a>
+  </div>
+</header>
+
+<!-- ── Main Analyser ─────────────────────────────────────────────────── -->
+<main id="analyser" class="analyser-section">
+  <div class="container">
+    <h2 class="section-title">Resume Analyser</h2>
+    <p class="section-subtitle">Get your ATS score in under 30 seconds</p>
+
+    <div class="analyser-grid">
+
+      <!-- ── Left: Inputs ── -->
+      <div class="input-panel glass-card">
+        <!-- Resume Upload -->
+        <div class="input-group">
+          <label class="input-label">
+            <span class="label-icon">📄</span>
+            Your Resume <span class="tag">PDF</span>
+          </label>
+          <div class="drop-zone" id="dropZone">
+            <input type="file" id="resumeFile" accept=".pdf" hidden />
+            <div class="drop-inner" id="dropInner">
+              <div class="drop-icon">📁</div>
+              <p class="drop-text">Drag & Drop your PDF here</p>
+              <p class="drop-sub">or</p>
+              <button class="btn btn-outline" id="browseBtn" type="button">Browse File</button>
+            </div>
+            <div class="file-preview hidden" id="filePreview">
+              <span class="file-icon">📄</span>
+              <div class="file-info">
+                <span class="file-name" id="fileName">resume.pdf</span>
+                <span class="file-size" id="fileSize">—</span>
+              </div>
+              <button class="remove-btn" id="removeFile" title="Remove file">✕</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Job Description -->
+        <div class="input-group">
+          <label class="input-label" for="jobDesc">
+            <span class="label-icon">💼</span>
+            Job Description
+          </label>
+          <textarea
+            id="jobDesc"
+            class="textarea"
+            placeholder="Paste the full job description here — include required skills, responsibilities, and qualifications for the best results..."
+            rows="10"
+          ></textarea>
+          <div class="char-count">
+            <span id="charCount">0</span> characters
+          </div>
+        </div>
+
+        <button class="btn btn-primary btn-full" id="analyseBtn" disabled>
+          <span id="btnText">Analyse My Resume</span>
+          <span id="btnSpinner" class="spinner hidden"></span>
+        </button>
+        <p class="disclaimer">🔒 Your data is processed locally and never stored.</p>
+      </div>
+
+      <!-- ── Right: Results ── -->
+      <div class="results-panel" id="resultsPanel">
+
+        <!-- Placeholder -->
+        <div class="results-placeholder glass-card" id="placeholder">
+          <div class="placeholder-icon">🎯</div>
+          <h3>Your Analysis Will Appear Here</h3>
+          <p>Upload your resume and paste a job description, then click <strong>Analyse</strong> to get your ATS score.</p>
+          <ul class="placeholder-list">
+            <li>✅ ATS Compatibility Score</li>
+            <li>✅ Skill Gap Analysis</li>
+            <li>✅ Keyword Matching</li>
+            <li>✅ Actionable Improvements</li>
+          </ul>
+        </div>
+
+        <!-- Results Container (hidden until analysis) -->
+        <div class="results-container hidden" id="resultsContainer">
+
+          <!-- Score Hero Card -->
+          <div class="glass-card score-card">
+            <div class="score-header">
+              <div>
+                <h3 class="score-title">ATS Match Score</h3>
+                <p class="score-mode" id="scoreMode">—</p>
+              </div>
+              <div class="verdict-badge" id="verdictBadge">—</div>
+            </div>
+            <div class="score-gauge-wrap">
+              <svg class="score-gauge" viewBox="0 0 200 120" id="gaugesvg">
+                <defs>
+                  <linearGradient id="gaugeGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+                    <stop offset="0%" style="stop-color:#7c3aed"/>
+                    <stop offset="100%" style="stop-color:#06b6d4"/>
+                  </linearGradient>
+                </defs>
+                <!-- Background arc -->
+                <path d="M 20 100 A 80 80 0 0 1 180 100" fill="none" stroke="#1e1b4b" stroke-width="14" stroke-linecap="round"/>
+                <!-- Foreground arc -->
+                <path id="gaugeArc" d="M 20 100 A 80 80 0 0 1 180 100" fill="none" stroke="url(#gaugeGrad)" stroke-width="14" stroke-linecap="round"
+                  stroke-dasharray="251.2" stroke-dashoffset="251.2" style="transition: stroke-dashoffset 1.5s cubic-bezier(.4,0,.2,1)"/>
+                <!-- Score text -->
+                <text x="100" y="90" text-anchor="middle" class="gauge-score" id="gaugeScore">0%</text>
+                <text x="100" y="110" text-anchor="middle" class="gauge-label">ATS Score</text>
+              </svg>
+            </div>
+            <p class="score-summary" id="scoreSummary">—</p>
+            <div class="meta-pills">
+              <div class="meta-pill" id="metaTime">⏱ —</div>
+              <div class="meta-pill" id="metaWords">📝 —</div>
+              <div class="meta-pill" id="metaLikelihood">🎯 —</div>
+            </div>
+          </div>
+
+          <!-- Score Breakdown -->
+          <div class="glass-card">
+            <h3 class="card-title">Score Breakdown</h3>
+            <div class="breakdown-list" id="breakdownList">
+              <!-- Populated by JS -->
+            </div>
+          </div>
+
+          <!-- Skills Grid -->
+          <div class="skills-grid">
+            <div class="glass-card">
+              <h3 class="card-title matched-title">✅ Matched Skills</h3>
+              <div class="skill-tags" id="matchedSkills">—</div>
+            </div>
+            <div class="glass-card">
+              <h3 class="card-title missing-title">❌ Missing Skills</h3>
+              <div class="skill-tags" id="missingSkills">—</div>
+            </div>
+          </div>
+
+          <!-- Keywords Found / Missing -->
+          <div class="skills-grid">
+            <div class="glass-card">
+              <h3 class="card-title">🔑 Keywords Found</h3>
+              <div class="skill-tags keyword-tags" id="kwFound">—</div>
+            </div>
+            <div class="glass-card">
+              <h3 class="card-title">🔍 Keywords Missing</h3>
+              <div class="skill-tags keyword-missing" id="kwMissing">—</div>
+            </div>
+          </div>
+
+          <!-- Strengths & Improvements -->
+          <div class="skills-grid">
+            <div class="glass-card">
+              <h3 class="card-title">💪 Strengths</h3>
+              <ul class="bullet-list" id="strengthsList">—</ul>
+            </div>
+            <div class="glass-card">
+              <h3 class="card-title">🛠️ Areas to Improve</h3>
+              <ul class="bullet-list" id="improvementsList">—</ul>
+            </div>
+          </div>
+
+          <!-- Action Items -->
+          <div class="glass-card">
+            <h3 class="card-title">⚡ Action Plan</h3>
+            <div class="action-list" id="actionList">—</div>
+          </div>
+
+          <!-- Experience Comparison -->
+          <div class="glass-card exp-card">
+            <h3 class="card-title">📊 Experience Analysis</h3>
+            <div class="exp-grid">
+              <div class="exp-item">
+                <span class="exp-label">Required Experience</span>
+                <span class="exp-value" id="expRequired">—</span>
+              </div>
+              <div class="exp-item">
+                <span class="exp-label">Detected in Resume</span>
+                <span class="exp-value" id="expDetected">—</span>
+              </div>
+              <div class="exp-item">
+                <span class="exp-label">Role Fit</span>
+                <span class="exp-value accent" id="roleFit">—</span>
+              </div>
+              <div class="exp-item">
+                <span class="exp-label">Interview Likelihood</span>
+                <span class="exp-value accent" id="interviewLikelihood">—</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Download Report Button -->
+          <button class="btn btn-primary btn-full" id="downloadBtn">
+            📥 Download Full Report
+          </button>
+
+        </div>
+      </div>
+    </div>
+  </div>
+</main>
+
+<!-- ── How It Works ──────────────────────────────────────────────────── -->
+<section id="how-it-works" class="how-section">
+  <div class="container">
+    <h2 class="section-title">How It Works</h2>
+    <p class="section-subtitle">Three simple steps to job-ready perfection</p>
+    <div class="steps-grid">
+      <div class="step-card glass-card">
+        <div class="step-num">01</div>
+        <div class="step-icon">📄</div>
+        <h3>Upload Resume</h3>
+        <p>Drop your PDF resume. Our parser extracts every word, skill, and achievement.</p>
+      </div>
+      <div class="step-card glass-card">
+        <div class="step-num">02</div>
+        <div class="step-icon">💼</div>
+        <h3>Paste Job Description</h3>
+        <p>Add the exact job posting. The more detail, the more accurate your score.</p>
+      </div>
+      <div class="step-card glass-card">
+        <div class="step-num">03</div>
+        <div class="step-icon">🤖</div>
+        <h3>Get AI Analysis</h3>
+        <p>Google Gemini AI analyses both documents and returns your personalised ATS score with action items.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ── Footer ────────────────────────────────────────────────────────── -->
+<footer class="footer">
+<p>Made with ❤️ by <strong>LALIT SHARMA</strong> · ResumeAI © 2026</p>
+</footer>
+
+<!-- ── Toast Notification ─────────────────────────────────────────── -->
+<div class="toast" id="toast"></div>
+
+<script src="app.js"></script>
+</body>
+</html>
