@@ -1,0 +1,15 @@
+services:
+  - type: web
+    name: ai-resume-analyser
+    env: python
+    region: singapore
+    plan: free
+    buildCommand: pip install -r requirements.txt
+    startCommand: gunicorn backend.app:app --bind 0.0.0.0:$PORT --workers 2 --timeout 120
+    envVars:
+      - key: GEMINI_API_KEY
+        sync: false          # ← You will paste this in the Render dashboard
+      - key: DEBUG
+        value: false
+      - key: PYTHON_VERSION
+        value: 3.11.0
